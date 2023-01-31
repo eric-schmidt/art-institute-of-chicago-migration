@@ -1,97 +1,19 @@
-import fs from 'fs/promises';
 import chalk from 'chalk';
-import dotenv from 'dotenv';
-import contentful from 'contentful-management';
 import TurndownService from 'turndown';
 import { richTextFromMarkdown } from '@contentful/rich-text-from-markdown';
+import { environment } from './lib/contentful-environment.js';
+import { readFile, listDir } from './lib/filesystem.js';
+import { getFieldMapping } from './mappings/migration-mappings.js';
 
-// Init dotenv.
-dotenv.config();
+// Init constants.
+const DATA_DIR = './artic-api-data/json';
 
-// Init const vars.
-// const sourceDomain = 'https://dev-contentful-umami.pantheonsite.io';
-// const contentTypes = {
-//   article: {
-//     entityType: 'node',
-//     bundle: 'Article',
-//     includedFields: ['field_media_image', 'field_media_image.field_media_image'],
-//   },
-// };
-
-// Init Contentful client/environment.
-const environment = await new contentful.createClient({
-  accessToken: process.env.CONTENTFUL_CMA_TOKEN,
-})
-  .getSpace(process.env.CONTENTFUL_SPACE_ID)
-  .then((space) => space.getEnvironment(process.env.CONTENTFUL_ENVIRONMENT_ID))
-  .then((env) => {
-    return env;
-  });
-
-// Utility functions for reading a directory and its files.
-const readFile = async (file) => {
-  try {
-    const data = await fs.readFile(file);
-    return await data.toString();
-  } catch (error) {
-    console.error(`Error reading file: ${error.message}`);
-  }
-};
-
-const listDir = async (path) => {
-  try {
-    return await fs.readdir(path);
-  } catch (error) {
-    console.error(`Error reading file directory: ${error.message}`);
-  }
-};
-
-// Fetch content from a specific path (i.e. JSON data stored in this repo).
-const migrateFromPath = async (contentType, path) => {
-  const files = await listDir(path);
-
-  // TODO: Can we add batching logic here?
-  const filesSubset = files.slice(0, 1);
-
-  filesSubset.forEach(async (file) => {
-    let data = await readFile(`${path}/${file}`);
-    data = await JSON.parse(data);
-
-    console.log(data);
-
-    // If entry already exists (ID field in Contentful), bail out.
-    // TODO: This can be extended to instead update existing entries.
-    if (await getExistingEntry(contentType, data.id)) return;
-
-    environment
-      .createEntry(contentType, {
-        fields: {
-          id: {
-            'en-US': data.id.toString(),
-          },
-          title: {
-            'en-US': data.title,
-          },
-          alternateTitles: {
-            'en-US': data.alt_titles,
-          },
-          // primaryImage: {
-          //   'en-US': data.image_id
-          // },
-          // alternateImages: {
-          //   'en-US': data.alt_image_ids
-          // },
-          boostRank: {
-            'en-US': data.boost_rank,
-          },
-        },
-      })
-      .then((entry) => {
-        // entry.publish();
-        console.log(chalk.green(`Entry (${contentType}) created: ${entry.sys.id}`));
-      })
-      .catch(console.error);
-  });
+// Content type mappings.
+// TODO: Should we move this to migration-mappings.js?
+const contentTypeDirs = {
+  agent: `${DATA_DIR}/agents`,
+  artworkType: `${DATA_DIR}/artwork-types`,
+  gallery: `${DATA_DIR}/galleries`,
 };
 
 // Determine if an entry already exists within Contentful.
@@ -106,146 +28,80 @@ const getExistingEntry = async (contentType, id) => {
   return entry.total > 0 ? entry.items[0] : null;
 };
 
+// Migrate a single entry, first determining if it already exists or needs to be created.
+export const migrateEntry = async (contentType, id) => {
+  const existingEntry = await getExistingEntry(contentType, id);
+
+  // TODO: Figure out why this fails when running multiple entry migrations at once -- it creates
+  // multiple of the same entry because it's not synchronously creating referenced entries before
+  // moving on. E.g. If 5 Artworks are queued up at once and have the same artist, 5 artist entries
+  // are created because the artworks are queued before artists are created 🤔
+  // Would Promise.all fix this?
+  if (existingEntry) {
+    return {
+      sys: {
+        type: 'Link',
+        linkType: 'Entry',
+        id: existingEntry.sys.id,
+      },
+    };
+  } else {
+    let data = await fetchSourceDataById(contentType, id);
+    data = await JSON.parse(data);
+
+    return await environment
+      // For reusability of the migrateEntry function, field mapping has been extrapolated out.
+      // Need to pass the content type, as well as fetched data, to getFieldMapping().
+      .createEntry(contentType, await getFieldMapping(contentType, data))
+      // .then((entry) => entry.publish())
+      .then((entry) => {
+        console.log(chalk.green(`Entry (${contentType}) created: ${entry.sys.id}`));
+        return {
+          sys: {
+            type: 'Link',
+            linkType: 'Entry',
+            id: entry.sys.id,
+          },
+        };
+      });
+  }
+};
+
+// Run a migration for multiple entries, wrapped in Promise.all to account for using .map.
+export const migrateEntries = async (contentType, idList) => await Promise.all(idList.map(async (id) => migrateEntry(contentType, id)));
+
+// Fetch content from a single source file using a path (from mapping above) and id.
+const fetchSourceDataById = async (contentType, id) => await readFile(`${contentTypeDirs[contentType]}/${id}.json`);
+
+// Fetch all content from a specific path (i.e. JSON data stored in this repo).
+const migrateAllFromPath = async (contentType, path) => {
+  const files = await listDir(path);
+
+  console.log(files.length);
+
+  // TODO: Can we add batching logic here?
+  // const filesSubset = files.slice(0, 1);
+  const filesSubset = files.slice(11, 30);
+
+  // TODO: For loop (not forEach) will wait for each step to complete, rather than async
+  filesSubset.forEach(async (file) => {
+    let data = await readFile(`${path}/${file}`);
+    data = await JSON.parse(data);
+
+    // If entry already exists (ID field in Contentful), bail out.
+    // TODO: This can be extended to instead update existing entries.
+    if (await getExistingEntry(contentType, data.id)) return;
+
+    environment
+      .createEntry(contentType, await getFieldMapping(contentType, data))
+      .then((entry) => {
+        // entry.publish();
+        console.log(chalk.green(`Entry (${contentType}) created: ${entry.sys.id}`));
+      })
+      .catch(console.error);
+  });
+};
+
 (async function () {
-  migrateFromPath('artwork', 'artic-api-data/json/artworks');
-  // const { data } = await migrateFromPath('artic-api-data/json/artworks');
+  migrateAllFromPath('artwork', `${DATA_DIR}/artworks`);
 })();
-
-// // Migrate the media item, including the creation of the referenced image file.
-// const migrateMedia = async (mediaType, { id, attributes, relationships }, included) => {
-//   const imageWrapper = included.find((include) => include.id === relationships?.field_media_image.data.id);
-//   const image = included.find((include) => include.id === imageWrapper?.relationships?.field_media_image.data.id);
-
-//   // Get existing imageWrapper if it exists and return it,
-//   // otherwise create and return it.
-//   const existingEntry = await getExistingEntry(mediaType, imageWrapper.id);
-//   return existingEntry
-//     ? {
-//         sys: {
-//           type: 'Link',
-//           linkType: 'Entry',
-//           id: existingEntry.sys.id,
-//         },
-//       }
-//     : await environment
-//         .createEntry(mediaType, {
-//           fields: {
-//             title: {
-//               'en-US': imageWrapper?.attributes.name,
-//             },
-//             image: {
-//               'en-US': await createAsset(image),
-//             },
-//             alternativeText: {
-//               'en-US': 'This is some alternative text.',
-//             },
-//             drupalUuid: {
-//               'en-US': imageWrapper.id,
-//             },
-//           },
-//         })
-//         // .then((entry) => entry.publish())
-//         .then((entry) => {
-//           console.log(chalk.green(`Entry (${mediaType}) created: ${entry.sys.id}`));
-//           return {
-//             sys: {
-//               type: 'Link',
-//               linkType: 'Entry',
-//               id: entry.sys.id,
-//             },
-//           };
-//         });
-// };
-
-// // Create a new asset.
-// // This assumes that imageWrappers are unique, so we don't check for uniqueness here.
-// const createAsset = async (image) => {
-//   return await environment
-//     .createAsset({
-//       fields: {
-//         title: {
-//           'en-US': image?.attributes.filename,
-//         },
-//         file: {
-//           'en-US': {
-//             contentType: image?.attributes.filemime,
-//             fileName: image?.attributes.filename,
-//             upload: `${sourceDomain}${image?.attributes.uri.url}`,
-//           },
-//         },
-//       },
-//     })
-//     .then((asset) => asset.processForAllLocales())
-//     // .then((asset) => asset.publish())
-//     .then((asset) => {
-//       console.log(chalk.green(`Asset created: ${asset.sys.id}`));
-//       return {
-//         sys: {
-//           type: 'Link',
-//           linkType: 'Asset',
-//           id: asset.sys.id,
-//         },
-//       };
-//     })
-//     .catch(console.error);
-// };
-
-// // Init turndown for converting HTML into Markdown.
-// const turndownService = new TurndownService();
-
-// const createRichText = async (data) => {
-//   if (!data) {
-//     return null;
-//   }
-//   // First, convert HTML to Markdown.
-//   const markdown = await turndownService.turndown(data);
-//   // Next, convert Markdown to Rich Text.
-//   return await richTextFromMarkdown(markdown, async (node) => {
-//     // TODO: Processing for unsupported node types goes here.
-//     // E.g. creating imageWrappers for WYSIWYG images.
-//   });
-// };
-
-// (async function () {
-//   const { data, included } = await fetchDrupalData('article');
-
-//   data.map(async (entry) => {
-//     // console.dir(await createRichText(entry.attributes.body.value), { depth: 5 });
-//     // If entry already exists (based on Drupal UUID), bail out.
-//     // TODO: This can be extended to instead update existing entries.
-//     if (await getExistingEntry('article', entry.id)) return;
-
-//     environment
-//       .createEntry('article', {
-//         fields: {
-//           drupalUuid: {
-//             'en-US': entry.id,
-//           },
-//           title: {
-//             'en-US': entry.attributes.title,
-//           },
-//           body: {
-//             'en-US': await createRichText(entry.attributes.body.value),
-//           },
-//           image: {
-//             'en-US': await migrateMedia('imageWrapper', entry, included),
-//           },
-//           // ^^ this returns an object, like so:
-//           // image: {
-//           //   'en-US': {
-//           //     sys: {
-//           //       type: 'Link',
-//           //       linkType: 'Entry',
-//           //       id: '71xUe5rFNWkmdB6bI9hUqX',
-//           //     },
-//           //   },
-//           // },
-//         },
-//       })
-//       .then((entry) => {
-//         // entry.publish();
-//         console.log(chalk.green(`Entry (Article) created: ${entry.sys.id}`));
-//       })
-//       .catch(console.error);
-//   });
-// })();
