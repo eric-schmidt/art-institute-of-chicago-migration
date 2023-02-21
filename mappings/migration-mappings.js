@@ -1,5 +1,24 @@
-import { migrateEntry, migrateEntries } from '../index.js';
+import { createRichText, getExistingEntry, getExistingEntries } from '../index.js';
 
+// Get the correct data directory for a specific content type.
+export const getContentTypeDir = (contentType) => {
+  const dataDir = './artic-api-data/json';
+  const contentTypeDirs = {
+    // agent: `${dataDir}/agents`,
+    agent: `${dataDir}/agents`,
+    artwork: `${dataDir}/artworks`,
+    artworkType: `${dataDir}/artwork-types`,
+    gallery: `${dataDir}/galleries`,
+  };
+
+  return contentTypeDirs[contentType];
+};
+
+// Some source fields contain "null" strings. Rather than importing these,
+// we should return undefined so that the field stays blank within Contentful.
+const getDataOrUndefined = (data) => (data ? data : undefined);
+
+// Get the Contentful field mapping for a specific content type.
 export const getFieldMapping = async (contentType, data) => {
   switch (contentType) {
     // AGENT
@@ -7,25 +26,25 @@ export const getFieldMapping = async (contentType, data) => {
       return {
         fields: {
           id: {
-            'en-US': data.id ? data.id.toString() : undefined,
+            'en-US': data.id.toString(),
           },
           name: {
-            'en-US': data.title ? data.title : undefined,
+            'en-US': getDataOrUndefined(data.title),
           },
           sortableName: {
-            'en-US': data.sort_title ? data.sort_title : undefined,
+            'en-US': getDataOrUndefined(data.sort_title),
           },
           isArtist: {
-            'en-US': data.is_artist ? data.is_artist : undefined,
+            'en-US': getDataOrUndefined(data.is_artist),
           },
           birthDate: {
-            'en-US': data.birth_date ? data.birth_date : undefined,
+            'en-US': getDataOrUndefined(data.birth_date),
           },
           deathDate: {
-            'en-US': data.death_date ? data.death_date : undefined,
+            'en-US': getDataOrUndefined(data.death_date),
           },
           description: {
-            'en-US': data.description ? data.description : undefined,
+            'en-US': await createRichText(data.description),
           },
         },
       };
@@ -35,13 +54,13 @@ export const getFieldMapping = async (contentType, data) => {
       return {
         fields: {
           id: {
-            'en-US': data.id ? data.id.toString() : undefined,
+            'en-US': data.id.toString(),
           },
           title: {
-            'en-US': data.title ? data.title : undefined,
+            'en-US': getDataOrUndefined(data.title),
           },
           alternateTitles: {
-            'en-US': data.alt_titles ? data.alt_titles : undefined,
+            'en-US': getDataOrUndefined(data.alt_titles),
           },
           // primaryImage: {
           //   'en-US': data.image_id
@@ -50,38 +69,38 @@ export const getFieldMapping = async (contentType, data) => {
           //   'en-US': data.alt_image_ids
           // },
           boostRank: {
-            'en-US': data.boost_rank ? data.boost_rank : undefined,
+            'en-US': getDataOrUndefined(data.boost_rank),
           },
           startDate: {
-            'en-US': data.date_start ? data.date_start : undefined,
+            'en-US': getDataOrUndefined(data.date_start),
           },
           endDate: {
-            'en-US': data.date_end ? data.date_end : undefined,
+            'en-US': getDataOrUndefined(data.date_end),
           },
           displayDate: {
-            'en-US': data.date_display ? data.date_display : undefined,
+            'en-US': getDataOrUndefined(data.date_display),
           },
-          gallery: {
-            'en-US': data.gallery_id ? await migrateEntry('gallery', data.gallery_id) : undefined,
-          },
+          // gallery: {
+          //   'en-US': data.gallery_id ? await getExistingEntry('gallery', data.gallery_id) : undefined,
+          // },
           artistsReference: {
-            'en-US': data.artist_ids ? await migrateEntries('agent', data.artist_ids) : undefined,
+            'en-US': data.artist_ids ? await getExistingEntries('agent', data.artist_ids) : undefined,
           },
           artistsDisplay: {
-            'en-US': data.artist_display ? data.artist_display : undefined,
+            'en-US': getDataOrUndefined(data.artist_display),
           },
           placeOfOrigin: {
-            'en-US': data.place_of_origin ? data.place_of_origin : undefined,
+            'en-US': getDataOrUndefined(data.place_of_origin),
           },
           dimensions: {
-            'en-US': data.dimensions ? data.dimensions : undefined,
+            'en-US': getDataOrUndefined(data.dimensions),
           },
           color: {
-            'en-US': data.color ? data.color : undefined,
+            'en-US': getDataOrUndefined(data.color),
           },
-          artworkType: {
-            'en-US': data.artwork_type_id ? await migrateEntry('artworkType', data.artwork_type_id) : undefined,
-          },
+          // artworkType: {
+          //   'en-US': data.artwork_type_id ? await getExistingEntry('artworkType', data.artwork_type_id) : undefined,
+          // },
           // categories: {
           //   'en-US': data.category_ids,
           // },
@@ -93,11 +112,29 @@ export const getFieldMapping = async (contentType, data) => {
       return {
         fields: {
           id: {
-            'en-US': data.id ? data.id.toString() : undefined,
+            'en-US': data.id.toString(),
           },
           title: {
-            'en-US': data.title ? data.title : undefined,
+            'en-US': getDataOrUndefined(data.title),
           },
+        },
+      };
+
+    case 'categoryTerm':
+      return {
+        fields: {
+          id: {
+            'en-US': data.id.toString(),
+          },
+          title: {
+            'en-US': getDataOrUndefined(data.title),
+          },
+          subtype: {
+            'en-US': getDataOrUndefined(data.subtype),
+          },
+          // parent: {
+          //   'en-US': getDataOrUndefined(data.parent_id), // TODO: Unfortunately, this won't work, as we need to reference another category, which may not yet be imported 🤔
+          // }
         },
       };
 
@@ -106,10 +143,10 @@ export const getFieldMapping = async (contentType, data) => {
       return {
         fields: {
           id: {
-            'en-US': data.id ? data.id.toString() : undefined,
+            'en-US': data.id.toString(),
           },
           title: {
-            'en-US': data.title ? data.title : undefined,
+            'en-US': getDataOrUndefined(data.title),
           },
         },
       };
