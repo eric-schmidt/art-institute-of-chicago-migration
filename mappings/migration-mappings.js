@@ -4,10 +4,10 @@ import { createRichText, getExistingEntry, getExistingEntries } from '../index.j
 export const getContentTypeDir = (contentType) => {
   const dataDir = './artic-api-data/json';
   const contentTypeDirs = {
-    // agent: `${dataDir}/agents`,
     agent: `${dataDir}/agents`,
     artwork: `${dataDir}/artworks`,
     artworkType: `${dataDir}/artwork-types`,
+    categoryTerm: `${dataDir}/category-terms`,
     gallery: `${dataDir}/galleries`,
   };
 
@@ -132,9 +132,6 @@ export const getFieldMapping = async (contentType, data) => {
           subtype: {
             'en-US': getDataOrUndefined(data.subtype),
           },
-          // parent: {
-          //   'en-US': getDataOrUndefined(data.parent_id), // TODO: Unfortunately, this won't work, as we need to reference another category, which may not yet be imported 🤔
-          // }
         },
       };
 
