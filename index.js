@@ -40,28 +40,48 @@ export const getExistingEntries = async (contentType, idList) => {
   );
 };
 
+// Update an existing entry that has already been migrated, using updated field values.
+export const updateExistingEntry = async (entryId, updatedEntry) => {
+  return await environment.getEntry(entryId)
+    .then((entry) => {
+      entry.fields = updatedEntry.fields;
+      entry.metadata = updatedEntry.metadata;
+      return entry.update()
+    })
+    .then((entry) => {
+      entry.publish();
+      console.log(chalk.yellow(`Updated ${entry.sys.contentType.sys.id} id: ${entry.sys.id}`))
+      return entry.sys.id
+    })
+}
+
 // Migrate all content from a specific path (i.e. JSON data stored in this repo).
 const migrateAllFromPath = async (contentType) => {
   const path = getContentTypeDir(contentType);
   const files = await listDir(path);
 
   // Run migration in batches using PromisePool to avoid excessive rate limit errors.
-  await PromisePool.withConcurrency(3)
+  await PromisePool.withConcurrency(1)
     .for(files)
     .process(async (file) => {
+      // Get source data from file.
       let data = await readFile(`${path}/${file}`);
-
-      // If entry already exists (ID field in Contentful), bail out.
-      // TODO: This can be extended to instead update existing entries.
-      if (await getExistingEntry(contentType, data.id)) return;
-
-      environment
+      // Check if entry we are attempting to migrate already exists.
+      let existingEntry = await getExistingEntry(contentType, data.id);
+      // If entry already exists, update the entry;
+      // otherwise, create and return a new entry.
+      if (existingEntry) {
+        let updatedData = await getFieldMapping(contentType, data);
+        updateExistingEntry(existingEntry.sys.id, updatedData);
+      } else {
+        environment
         .createEntry(contentType, await getFieldMapping(contentType, data))
         .then((entry) => {
           entry.publish();
           console.log(chalk.green(`Entry (${contentType}) created: ${entry.sys.id}`));
         })
         .catch(console.error);
+      };
     });
 };
 
