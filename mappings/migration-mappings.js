@@ -1,8 +1,12 @@
-import { createRichText, getExistingEntry, getExistingEntries } from '../index.js';
+import {
+  createRichText,
+  getExistingEntry,
+  getExistingEntries,
+} from "../index.js";
 
 // Get the correct data directory for a specific content type.
 export const getContentTypeDir = (contentType) => {
-  const dataDir = './artic-api-data/json';
+  const dataDir = "./artic-api-data/json";
   const contentTypeDirs = {
     agent: `${dataDir}/agents`,
     artwork: `${dataDir}/artworks`,
@@ -22,45 +26,45 @@ const getDataOrUndefined = (data) => (data ? data : undefined);
 export const getFieldMapping = async (contentType, data) => {
   switch (contentType) {
     // AGENT
-    case 'agent':
+    case "agent":
       return {
         fields: {
           id: {
-            'en-US': data.id.toString(),
+            "en-US": data.id.toString(),
           },
           name: {
-            'en-US': getDataOrUndefined(data.title),
+            "en-US": getDataOrUndefined(data.title),
           },
           sortableName: {
-            'en-US': getDataOrUndefined(data.sort_title),
+            "en-US": getDataOrUndefined(data.sort_title),
           },
           isArtist: {
-            'en-US': getDataOrUndefined(data.is_artist),
+            "en-US": getDataOrUndefined(data.is_artist),
           },
           birthDate: {
-            'en-US': getDataOrUndefined(data.birth_date),
+            "en-US": getDataOrUndefined(data.birth_date),
           },
           deathDate: {
-            'en-US': getDataOrUndefined(data.death_date),
+            "en-US": getDataOrUndefined(data.death_date),
           },
           description: {
-            'en-US': await createRichText(data.description),
+            "en-US": await createRichText(data.description),
           },
         },
       };
 
     // ARTWORK
-    case 'artwork':
+    case "artwork":
       return {
         fields: {
           id: {
-            'en-US': data.id.toString(),
+            "en-US": data.id.toString(),
           },
           title: {
-            'en-US': getDataOrUndefined(data.title),
+            "en-US": getDataOrUndefined(data.title),
           },
           alternateTitles: {
-            'en-US': getDataOrUndefined(data.alt_titles),
+            "en-US": getDataOrUndefined(data.alt_titles),
           },
           // primaryImage: {
           //   'en-US': data.image_id
@@ -69,34 +73,36 @@ export const getFieldMapping = async (contentType, data) => {
           //   'en-US': data.alt_image_ids
           // },
           boostRank: {
-            'en-US': getDataOrUndefined(data.boost_rank),
+            "en-US": getDataOrUndefined(data.boost_rank),
           },
           startDate: {
-            'en-US': getDataOrUndefined(data.date_start),
+            "en-US": getDataOrUndefined(data.date_start),
           },
           endDate: {
-            'en-US': getDataOrUndefined(data.date_end),
+            "en-US": getDataOrUndefined(data.date_end),
           },
           displayDate: {
-            'en-US': getDataOrUndefined(data.date_display),
+            "en-US": getDataOrUndefined(data.date_display),
           },
           // gallery: {
           //   'en-US': data.gallery_id ? await getExistingEntry('gallery', data.gallery_id) : undefined,
           // },
           artistsReference: {
-            'en-US': data.artist_ids ? await getExistingEntries('agent', data.artist_ids) : undefined,
+            "en-US": data.artist_ids
+              ? await getExistingEntries("agent", data.artist_ids)
+              : undefined,
           },
           artistsDisplay: {
-            'en-US': getDataOrUndefined(data.artist_display),
+            "en-US": getDataOrUndefined(data.artist_display),
           },
           placeOfOrigin: {
-            'en-US': getDataOrUndefined(data.place_of_origin),
+            "en-US": getDataOrUndefined(data.place_of_origin),
           },
           dimensions: {
-            'en-US': getDataOrUndefined(data.dimensions),
+            "en-US": getDataOrUndefined(data.dimensions),
           },
           color: {
-            'en-US': getDataOrUndefined(data.color),
+            "en-US": getDataOrUndefined(data.color),
           },
           // artworkType: {
           //   'en-US': data.artwork_type_id ? await getExistingEntry('artworkType', data.artwork_type_id) : undefined,
@@ -108,42 +114,54 @@ export const getFieldMapping = async (contentType, data) => {
       };
 
     // ARTWORK TYPE
-    case 'artworkType':
+    case "artworkType":
       return {
         fields: {
           id: {
-            'en-US': data.id.toString(),
+            "en-US": data.id.toString(),
           },
           title: {
-            'en-US': getDataOrUndefined(data.title),
+            "en-US": getDataOrUndefined(data.title),
           },
         },
       };
 
-    case 'categoryTerm':
+    case "categoryTerm":
       return {
         fields: {
           id: {
-            'en-US': data.id.toString(),
+            "en-US": data.id.toString(),
           },
           title: {
-            'en-US': getDataOrUndefined(data.title),
+            "en-US": getDataOrUndefined(data.title),
           },
           subtype: {
-            'en-US': getDataOrUndefined(data.subtype),
+            "en-US": getDataOrUndefined(data.subtype),
           },
         },
       };
 
     // GALLERY
-    case 'gallery':
+    case "gallery":
       return {
         fields: {
           id: {
-            'en-US': data.id.toString(),
+            "en-US": data.id.toString(),
           },
           title: {
-            'en-US': getDataOrUndefined(data.title),
+            "en-US": getDataOrUndefined(data.title),
+          },
+          number: {
+            "en-US": getDataOrUndefined(data.number),
+          },
+          floor: {
+            "en-US": getDataOrUndefined(data.floor),
+          },
+          location: {
+            "en-US": {
+              lat: getDataOrUndefined(data.latitude),
+              lon: getDataOrUndefined(data.longitude),
+            },
           },
         },
       };
