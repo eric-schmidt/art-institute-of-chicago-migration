@@ -1,21 +1,24 @@
+import { createRichText } from "../lib/createInContentful.js";
 import {
-  createRichText,
+  getExistingAsset,
   getExistingEntry,
   getExistingEntries,
-} from "../index.js";
+} from "../lib/findInContentful.js";
 
 // Get the correct data directory for a specific content type.
-export const getContentTypeDir = (contentType) => {
+export const getSourceDir = (type) => {
   const dataDir = "./artic-api-data/json";
-  const contentTypeDirs = {
+  const typeDirs = {
     agent: `${dataDir}/agents`,
+    artworkAsset: `${dataDir}/artworks`,
+    imageWrapper: `${dataDir}/artworks`,
     artwork: `${dataDir}/artworks`,
     artworkType: `${dataDir}/artwork-types`,
     categoryTerm: `${dataDir}/category-terms`,
     gallery: `${dataDir}/galleries`,
   };
 
-  return contentTypeDirs[contentType];
+  return typeDirs[type];
 };
 
 // Some source fields contain "null" strings. Rather than importing these,
@@ -23,8 +26,8 @@ export const getContentTypeDir = (contentType) => {
 const getDataOrUndefined = (data) => (data ? data : undefined);
 
 // Get the Contentful field mapping for a specific content type.
-export const getFieldMapping = async (contentType, data) => {
-  switch (contentType) {
+export const getFieldMapping = async (type, data) => {
+  switch (type) {
     // AGENT
     case "agent":
       return {
@@ -53,7 +56,44 @@ export const getFieldMapping = async (contentType, data) => {
         },
       };
 
-    // ARTWORK
+    // ARTWORK ASSETS
+    case "artworkAsset":
+      return {
+        fields: {
+          title: {
+            "en-US": `${data.artist_title} | ${data.title}`,
+          },
+          file: {
+            "en-US": {
+              contentType: "image/jpeg",
+              fileName: `${data.image_id}.jpg`,
+              upload: `https://www.artic.edu/iiif/2/${data.image_id}/full/1686,/0/default.jpg`,
+            },
+          },
+        },
+      };
+      break;
+
+    // ARTWORK IMAGE WRAPPERS
+    case "imageWrapper":
+      return {
+        fields: {
+          id: {
+            "en-US": data.id.toString(),
+          },
+          title: {
+            "en-US": `${data.artist_title} | ${data.title}`,
+          },
+          image: {
+            "en-US": await getExistingAsset(data.image_id),
+          },
+          alternativeText: {
+            "en-US": getDataOrUndefined(data.thumbnail.alt_text),
+          },
+        },
+      };
+
+    // ARTWORK ENTRIES
     case "artwork":
       return {
         fields: {
@@ -67,10 +107,7 @@ export const getFieldMapping = async (contentType, data) => {
             "en-US": getDataOrUndefined(data.alt_titles),
           },
           // primaryImage: {
-          //   'en-US': data.image_id
-          // },
-          // alternateImages: {
-          //   'en-US': data.alt_image_ids
+          //   "en-US": getExistingEntry("imageWrapper", data.id),
           // },
           boostRank: {
             "en-US": getDataOrUndefined(data.boost_rank),
@@ -84,9 +121,11 @@ export const getFieldMapping = async (contentType, data) => {
           displayDate: {
             "en-US": getDataOrUndefined(data.date_display),
           },
-          // gallery: {
-          //   'en-US': data.gallery_id ? await getExistingEntry('gallery', data.gallery_id) : undefined,
-          // },
+          gallery: {
+            "en-US": data.gallery_id
+              ? await getExistingEntry("gallery", data.gallery_id)
+              : undefined,
+          },
           artistsReference: {
             "en-US": data.artist_ids
               ? await getExistingEntries("agent", data.artist_ids)
@@ -104,12 +143,49 @@ export const getFieldMapping = async (contentType, data) => {
           color: {
             "en-US": getDataOrUndefined(data.color),
           },
-          // artworkType: {
-          //   'en-US': data.artwork_type_id ? await getExistingEntry('artworkType', data.artwork_type_id) : undefined,
-          // },
-          // categories: {
-          //   'en-US': data.category_ids,
-          // },
+          artworkType: {
+            "en-US": data.artwork_type_id
+              ? await getExistingEntry("artworkType", data.artwork_type_id)
+              : undefined,
+          },
+          department: {
+            "en-US": data.department_id
+              ? await getExistingEntry("categoryTerm", data.department_id)
+              : undefined,
+          },
+          categories: {
+            "en-US": data.category_ids
+              ? await getExistingEntries("categoryTerm", data.category_ids)
+              : undefined,
+          },
+          styles: {
+            "en-US": data.style_ids
+              ? await getExistingEntries("categoryTerm", data.style_ids)
+              : undefined,
+          },
+          classifications: {
+            "en-US": data.classification_ids
+              ? await getExistingEntries(
+                  "categoryTerm",
+                  data.classification_ids
+                )
+              : undefined,
+          },
+          subjects: {
+            "en-US": data.subject_ids
+              ? await getExistingEntries("categoryTerm", data.subject_ids)
+              : undefined,
+          },
+          materials: {
+            "en-US": data.material_ids
+              ? await getExistingEntries("categoryTerm", data.material_ids)
+              : undefined,
+          },
+          techniques: {
+            "en-US": data.technique_ids
+              ? await getExistingEntries("categoryTerm", data.technique_ids)
+              : undefined,
+          },
         },
       };
 
