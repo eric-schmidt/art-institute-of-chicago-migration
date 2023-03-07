@@ -10,8 +10,8 @@ export const getSourceDir = (type) => {
   const dataDir = "./artic-api-data/json";
   const typeDirs = {
     agent: `${dataDir}/agents`,
-    artworkAsset: `${dataDir}/artworks`,
-    imageWrapper: `${dataDir}/artworks`,
+    artworkAsset: `${dataDir}/images`,
+    imageWrapper: `${dataDir}/images`,
     artwork: `${dataDir}/artworks`,
     artworkType: `${dataDir}/artwork-types`,
     categoryTerm: `${dataDir}/category-terms`,
@@ -61,13 +61,13 @@ export const getFieldMapping = async (type, data) => {
       return {
         fields: {
           title: {
-            "en-US": `${data.artist_title} | ${data.title}`,
+            "en-US": data.id,
           },
           file: {
             "en-US": {
               contentType: "image/jpeg",
-              fileName: `${data.image_id}.jpg`,
-              upload: `https://www.artic.edu/iiif/2/${data.image_id}/full/1686,/0/default.jpg`,
+              fileName: `${data.id}.jpg`,
+              upload: `https://www.artic.edu/iiif/2/${data.id}/full/1686,/0/default.jpg`,
             },
           },
         },
@@ -79,16 +79,16 @@ export const getFieldMapping = async (type, data) => {
       return {
         fields: {
           id: {
-            "en-US": data.id.toString(),
+            "en-US": data.id,
           },
           title: {
-            "en-US": `${data.artist_title} | ${data.title}`,
+            "en-US": data.artwork_titles[0],
           },
           image: {
-            "en-US": await getExistingAsset(data.image_id),
+            "en-US": await getExistingAsset(data.id),
           },
           alternativeText: {
-            "en-US": data.thumbnail?.alt_text,
+            "en-US": getDataOrUndefined(data.alt_text),
           },
         },
       };
@@ -106,9 +106,11 @@ export const getFieldMapping = async (type, data) => {
           alternateTitles: {
             "en-US": getDataOrUndefined(data.alt_titles),
           },
-          // primaryImage: {
-          //   "en-US": getExistingEntry("imageWrapper", data.id),
-          // },
+          primaryImage: {
+            "en-US": data.image_id
+              ? await getExistingEntry("imageWrapper", data.image_id)
+              : undefined,
+          },
           boostRank: {
             "en-US": getDataOrUndefined(data.boost_rank),
           },

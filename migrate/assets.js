@@ -20,12 +20,8 @@ const migrateFromPath = async (type) => {
       // Get source data from file.
       let data = await readFile(`${path}/${file}`);
 
-      // Prevent errors by returning early if image_id is not present.
-      // I.e. if image_id is not present, there is no image to grab.
-      if (data.image_id === null) return;
-
       // Check if asset we are attempting to migrate already exists.
-      let existingAsset = await getExistingAsset(data.image_id);
+      let existingAsset = await getExistingAsset(data.id);
       // If asset already exists, update the asset;
       // otherwise, create and return a new asset.
       if (existingAsset) {
