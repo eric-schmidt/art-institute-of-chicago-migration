@@ -88,7 +88,7 @@ export const getFieldMapping = async (type, data) => {
             "en-US": await getExistingAsset(data.image_id),
           },
           alternativeText: {
-            "en-US": getDataOrUndefined(data.thumbnail.alt_text),
+            "en-US": data.thumbnail?.alt_text,
           },
         },
       };

@@ -20,14 +20,9 @@ const migrateFromPath = async (type) => {
       // Get source data from file.
       let data = await readFile(`${path}/${file}`);
 
-      console.log(`${data.title}. ID: ${data.id}`);
-
-      // TODO: Figure out why conflicts are arising here.
-      // Is it because we need to wait for the image to be uploaded ot publish,
-      // or because of null values?
-
       // Prevent errors by returning early if image_id is not present.
-      // if (data.image_id === null) return;
+      // I.e. if image_id is not present, there is no image to grab.
+      if (data.image_id === null) return;
 
       // Check if asset we are attempting to migrate already exists.
       let existingAsset = await getExistingAsset(data.image_id);
