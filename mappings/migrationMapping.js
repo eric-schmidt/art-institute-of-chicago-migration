@@ -1,6 +1,10 @@
-import { createRichText } from "../lib/createInContentful.js";
+import { imageUrlStatusOk } from "../lib/utils.js";
 import {
-  getExistingAsset,
+  createRichText,
+  migrateAsset,
+  migrateEntry,
+} from "../lib/createInContentful.js";
+import {
   getExistingEntry,
   getExistingEntries,
 } from "../lib/findInContentful.js";
@@ -10,8 +14,6 @@ export const getSourceDir = (type) => {
   const dataDir = "./artic-api-data/json";
   const typeDirs = {
     agent: `${dataDir}/agents`,
-    artworkAsset: `${dataDir}/images`,
-    imageWrapper: `${dataDir}/images`,
     artwork: `${dataDir}/artworks`,
     artworkType: `${dataDir}/artwork-types`,
     categoryTerm: `${dataDir}/category-terms`,
@@ -56,18 +58,18 @@ export const getFieldMapping = async (type, data) => {
         },
       };
 
-    // ARTWORK ASSETS
-    case "artworkAsset":
+    // ARTWORK IMAGES
+    case "artworkImage":
       return {
         fields: {
           title: {
-            "en-US": data.id,
+            "en-US": data.title,
           },
           file: {
             "en-US": {
               contentType: "image/jpeg",
-              fileName: `${data.id}.jpg`,
-              upload: `https://www.artic.edu/iiif/2/${data.id}/full/1686,/0/default.jpg`,
+              fileName: `${data.image_id}.jpg`,
+              upload: `https://www.artic.edu/iiif/2/${data.image_id}/full/1686,/0/default.jpg`,
             },
           },
         },
@@ -79,16 +81,16 @@ export const getFieldMapping = async (type, data) => {
       return {
         fields: {
           id: {
-            "en-US": data.id,
+            "en-US": data.image_id,
           },
           title: {
-            "en-US": data.artwork_titles[0],
+            "en-US": data.title,
           },
           image: {
-            "en-US": await getExistingAsset(data.id),
+            "en-US": await migrateAsset("artworkImage", data, "title"),
           },
           alternativeText: {
-            "en-US": getDataOrUndefined(data.alt_text),
+            "en-US": data?.thumbnail.alt_text,
           },
         },
       };
@@ -107,9 +109,10 @@ export const getFieldMapping = async (type, data) => {
             "en-US": getDataOrUndefined(data.alt_titles),
           },
           primaryImage: {
-            "en-US": data.image_id
-              ? await getExistingEntry("imageWrapper", data.image_id)
-              : undefined,
+            "en-US":
+              data.image_id && (await imageUrlStatusOk(data.image_id))
+                ? await migrateEntry("imageWrapper", data, "image_id")
+                : undefined,
           },
           boostRank: {
             "en-US": getDataOrUndefined(data.boost_rank),
