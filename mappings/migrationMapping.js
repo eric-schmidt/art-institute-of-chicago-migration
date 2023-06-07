@@ -27,6 +27,21 @@ export const getSourceDir = (type) => {
 // we should return undefined so that the field stays blank within Contentful.
 const getDataOrUndefined = (data) => (data ? data : undefined);
 
+// Create a URL-safe slug composed of the title and ID.
+const generateSlug = (data) => {
+  const urlSafeSlug = slugify(`${data.title}-${data.id.toString()}`);
+};
+
+// Creates a URL-safe slug from a given string.
+const slugify = (str) => {
+  return str
+    .toLowerCase()
+    .trim()
+    .replace(/[^\w\s-]/g, "")
+    .replace(/[\s_-]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+};
+
 // Get the Contentful field mapping for a specific content type.
 export const getFieldMapping = async (type, data) => {
   switch (type) {
@@ -104,6 +119,9 @@ export const getFieldMapping = async (type, data) => {
           },
           title: {
             "en-US": getDataOrUndefined(data.title),
+          },
+          slug: {
+            "en-US": generateSlug(data),
           },
           alternateTitles: {
             "en-US": getDataOrUndefined(data.alt_titles),
