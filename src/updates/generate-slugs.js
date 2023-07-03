@@ -10,8 +10,7 @@ import { PromisePool } from "@supercharge/promise-pool";
 // Init dotenv.
 dotenv.config();
 
-// Set env to use and default batch size.
-const ENV = "sandbox";
+// Set default batch size.
 const BATCH_SIZE = 100;
 
 // Migrate all content from a specific path (i.e. JSON data stored in this repo).
@@ -21,7 +20,9 @@ const generateSlugs = async () => {
       accessToken: process.env.CONTENTFUL_CMA_TOKEN,
     })
     .getSpace(process.env.CONTENTFUL_SPACE_ID)
-    .then((space) => space.getEnvironment(ENV))
+    .then((space) =>
+      space.getEnvironment(process.env.CONTENTFUL_ENVIRONMENT_ID)
+    )
     .then((env) => env);
 
   // Get all artwork entries that do not have a Slug value.
