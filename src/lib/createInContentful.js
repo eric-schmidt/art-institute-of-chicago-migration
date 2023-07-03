@@ -1,9 +1,9 @@
 import chalk from "chalk";
 import TurndownService from "turndown";
 import { richTextFromMarkdown } from "@contentful/rich-text-from-markdown";
-import { environment } from "../lib/contentfulEnvironment.js";
+import { environment } from "./contentfulEnvironment.js";
 import { getFieldMapping } from "../mappings/migrationMapping.js";
-import { getExistingAsset, getExistingEntry } from "../lib/findInContentful.js";
+import { getExistingAsset, getExistingEntry } from "./findInContentful.js";
 
 // Turn this to false when testing for quicker/easier deletion of test content.
 const PUBLISH_CONTENT = true;

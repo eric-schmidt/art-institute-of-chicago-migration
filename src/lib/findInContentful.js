@@ -1,4 +1,4 @@
-import { environment } from "../lib/contentfulEnvironment.js";
+import { environment } from "./contentfulEnvironment.js";
 
 // Determine if an entry already exists within Contentful.
 // Returns the entry data if found, or null if no entry found.
