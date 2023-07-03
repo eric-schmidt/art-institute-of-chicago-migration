@@ -2,29 +2,15 @@
 // script concatenates a URL-safe title + ID (for uniqueness
 // when Artworks have duplicate titles).
 
-import dotenv from "dotenv";
 import chalk, { Chalk } from "chalk";
-import contentful from "contentful-management";
 import { PromisePool } from "@supercharge/promise-pool";
-
-// Init dotenv.
-dotenv.config();
+import { environment } from "./cmaEnvironment.js";
 
 // Set default batch size.
 const BATCH_SIZE = 100;
 
 // Migrate all content from a specific path (i.e. JSON data stored in this repo).
 const generateSlugs = async () => {
-  const environment = await contentful
-    .createClient({
-      accessToken: process.env.CONTENTFUL_CMA_TOKEN,
-    })
-    .getSpace(process.env.CONTENTFUL_SPACE_ID)
-    .then((space) =>
-      space.getEnvironment(process.env.CONTENTFUL_ENVIRONMENT_ID)
-    )
-    .then((env) => env);
-
   // Get all artwork entries that do not have a Slug value.
   let entries = await environment.getEntries({
     content_type: "artwork",

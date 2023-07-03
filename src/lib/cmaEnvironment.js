@@ -1,5 +1,5 @@
-import contentful from "contentful-management";
 import dotenv from "dotenv";
+import contentful from "contentful-management";
 
 // Init dotenv.
 dotenv.config();

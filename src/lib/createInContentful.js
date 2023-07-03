@@ -1,7 +1,7 @@
 import chalk from "chalk";
 import TurndownService from "turndown";
 import { richTextFromMarkdown } from "@contentful/rich-text-from-markdown";
-import { environment } from "./contentfulEnvironment.js";
+import { environment } from "./cmaEnvironment.js";
 import { getFieldMapping } from "../mappings/migrationMapping.js";
 import { getExistingAsset, getExistingEntry } from "./findInContentful.js";
 
