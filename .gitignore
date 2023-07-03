@@ -3,6 +3,9 @@
 # api data
 /artic-api-data
 
+# public/generated files
+/public
+
 # dependencies
 /node_modules
 
