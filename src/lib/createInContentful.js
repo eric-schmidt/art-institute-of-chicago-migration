@@ -2,7 +2,7 @@ import chalk from "chalk";
 import TurndownService from "turndown";
 import { richTextFromMarkdown } from "@contentful/rich-text-from-markdown";
 import { environment } from "./cmaEnvironment.js";
-import { getFieldMapping } from "../mappings/migrationMapping.js";
+import { getFieldMapping } from "../migrations/migrationMapping.js";
 import { getExistingAsset, getExistingEntry } from "./findInContentful.js";
 
 // Turn this to false when testing for quicker/easier deletion of test content.

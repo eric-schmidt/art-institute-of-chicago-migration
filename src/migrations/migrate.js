@@ -3,7 +3,7 @@ import { PromisePool } from "@supercharge/promise-pool";
 import { listDir, readFile, deleteFile } from "../lib/filesystem.js";
 import { getArguments } from "../lib/commands.js";
 import { migrateEntry } from "../lib/createInContentful.js";
-import { getSourceDir } from "../mappings/migrationMapping.js";
+import { getSourceDir } from "./migrationMapping.js";
 
 // The number of concurrent Promises to run using the Promise Pool.
 // If you are seeing a lot of rate limit errors, try decreasing.
