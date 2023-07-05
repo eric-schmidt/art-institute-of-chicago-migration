@@ -3,8 +3,8 @@
 # api data
 /artic-api-data
 
-# public/generated files
-/public
+# orphan reports
+/orphans
 
 # dependencies
 /node_modules
