@@ -2,7 +2,7 @@ import dotenv from "dotenv";
 import contentful from "contentful";
 
 // Init dotenv.
-dotenv.config({ path: "../../.env" });
+dotenv.config();
 
 // Init Contentful delivery client.
 export const client = await new contentful.createClient({

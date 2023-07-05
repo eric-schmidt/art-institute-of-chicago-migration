@@ -4,8 +4,7 @@ import chalk from "chalk";
 // Read the contents of a single file.
 export const readFile = async (file) => {
   try {
-    const data = await fs.readFile(file);
-    return await JSON.parse(data);
+    return await fs.readFile(file, "utf8");
   } catch (error) {
     console.log(chalk.red(`Error reading file: ${error.message}`));
   }
@@ -30,31 +29,40 @@ export const listDir = async (path) => {
   }
 };
 
-export const createCSV = async (csvData, csvFilename) => {
-  // Check if "public" dir already exists. If not, create it.
+// Helper function for creating a CSV report of orphans that can later be
+// used to cull erroneous entries.
+export const createCSV = async ({ data, path, filename }) => {
+  // Properly format multidimensional array for output to CSV.
+  const csvRows = [];
+  data.forEach((row) => {
+    csvRows.push(row.join(","));
+  });
+  const csvString = csvRows.join("\n");
+
+  // Check if dir already exists. If not, create it.
   try {
-    await fs.access("../../public");
+    await fs.access(path);
   } catch (error) {
-    // If an error is thrown, the directory doesn't exist
+    // If an error is thrown, the directory doesn't exist.
     if (error.code === "ENOENT") {
       try {
         // Create the directory
-        await fs.mkdir("../../public");
-        console.log(chalk.green("Public directory created."));
+        await fs.mkdir(path);
+        console.log(chalk.green(`Directory created: ${path}`));
       } catch (error) {
-        console.error(chalk.red("Error creating Public directory."), error);
+        console.error(chalk.red(`Error creating directory: ${path}`), error);
       }
     } else {
-      console.error(chalk.red("Error accessing directory."), error);
+      console.error(chalk.red(`Error accessing directory: ${path}`), error);
     }
   }
 
-  // Write CSV content to file
+  // Write CSV content to file.
   try {
-    await fs.writeFile(`../../public/${csvFilename}`, csvData.join(","));
+    await fs.writeFile(`${path}/${filename}.csv`, csvString);
     console.log(
       chalk.green(
-        `CSV file has been successfully created: /public/${csvFilename}`
+        `CSV file has been successfully created: ${path}/${filename}.csv`
       )
     );
   } catch (error) {

@@ -19,9 +19,10 @@ const migrateFromPath = async (type) => {
     .for(files)
     .process(async (file) => {
       // Get source data from file.
-      let data = await readFile(`${path}/${file}`);
+      const data = await readFile(`${path}/${file}`);
+      const jsonData = await JSON.parse(data);
       // Migrate top level entries within Promise Pool.
-      await migrateEntry(type, data, "id");
+      await migrateEntry(type, jsonData, "id");
       // When migrating the artwork content type, there are over 100k entries.
       // One hacky way to be able to resume the migration w/o re-running the
       // same entries is to just delete each file once migrated, then subsequent
