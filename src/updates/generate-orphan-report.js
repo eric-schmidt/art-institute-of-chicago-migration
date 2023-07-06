@@ -36,11 +36,10 @@ const generateOrphanReport = async (type) => {
         });
         // If the total of items referencing this entry is 0 is is a deletion candidate.
         if (parentEntries.total === 0) {
+          let orphanUrl = `https://app.contentful.com/spaces/${process.env.CONTENTFUL_SPACE_ID}/environments/${process.env.CONTENTFUL_ENVIRONMENT_ID}/entries/${entry.sys.id}`;
           // Add entry ID + a link to the entry for easier author review.
-          orphans.push([
-            entry.sys.id,
-            `https://app.contentful.com/spaces/${process.env.CONTENTFUL_SPACE_ID}/environments/${process.env.CONTENTFUL_ENVIRONMENT_ID}/entries/${entry.sys.id}`,
-          ]);
+          orphans.push([entry.sys.id, orphanUrl]);
+          console.log(chalk.yellow(`Orphan found: ${orphanUrl}`));
         }
       });
   }

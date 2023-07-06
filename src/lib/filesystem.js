@@ -60,11 +60,7 @@ export const createCSV = async ({ data, path, filename }) => {
   // Write CSV content to file.
   try {
     await fs.writeFile(`${path}/${filename}.csv`, csvString);
-    console.log(
-      chalk.green(
-        `CSV file has been successfully created: ${path}/${filename}.csv`
-      )
-    );
+    console.log(chalk.green(`CSV file created: ${path}/${filename}.csv`));
   } catch (error) {
     console.log(chalk.red("Error writing CSV file:"), error);
   }
