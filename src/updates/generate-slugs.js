@@ -4,7 +4,7 @@
 
 import chalk, { Chalk } from "chalk";
 import { PromisePool } from "@supercharge/promise-pool";
-import { environment } from "./cmaEnvironment.js";
+import { environment } from "../lib/cmaEnvironment.js";
 
 // Set default batch size.
 const BATCH_SIZE = 100;
@@ -19,12 +19,8 @@ const generateSlugs = async () => {
     skip: 0,
   });
 
-  // Log out how many entries we are generating slugs for, if any.
-  entries.total
-    ? console.log(
-        chalk.yellow(`Generating slugs for ${entries.total} entries...`)
-      )
-    : console.log(chalk.red(`No missing slugs found!`));
+  // If there are no entries with a missing slug, log out a message.
+  if (!entries.total) console.log(chalk.red(`No missing slugs found!`));
 
   // Set up pagination logic for batching over all entries.
   const totalPages = Math.ceil(entries.total / entries.limit);
@@ -44,7 +40,7 @@ const generateSlugs = async () => {
     const CONCURRENCY = 1;
     await PromisePool.withConcurrency(CONCURRENCY)
       .for(entries.items)
-      .process(async (entry) => {
+      .process(async (entry, index) => {
         // Create a URL-safe slug composed of the title and ID.
         const urlSafeSlug = slugify(
           // Trim title field to 250 chars so that we can fit inside CF Symbol field.
@@ -59,9 +55,13 @@ const generateSlugs = async () => {
           };
           entry.update().then((entry) => {
             entry.publish();
-            console.log(
+
+            // Progress indicator.
+            process.stdout.write(
               chalk.green(
-                `Slug updated for "${entry.fields.title["en-US"]}" (${entry.sys.id})`
+                `Slugs updated for ${itemsPerPage * i + index} out of ${
+                  entries.total
+                } entries... \r`
               )
             );
           });
