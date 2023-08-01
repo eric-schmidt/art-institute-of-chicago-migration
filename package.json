@@ -11,7 +11,7 @@
   "license": "ISC",
   "dependencies": {
     "@contentful/rich-text-from-markdown": "^15.13.1",
-    "@supercharge/promise-pool": "^2.3.2",
+    "@supercharge/promise-pool": "^3.0.0",
     "chalk": "^5.1.2",
     "contentful-export": "^7.19.36",
     "contentful-management": "^10.15.1",
