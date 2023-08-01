@@ -17,13 +17,16 @@ const removeOrphans = async (type) => {
     .process(async (row, index) => {
       // Skip 1st iteration so we don't capture the header.
       if (index !== 0) {
-        // Entry ID is the first column of each row.
-        const entryId = row.split(",")[0];
-        // Get the entry, unpublish, then delete.
-        const entry = await environment.getEntry(entryId);
-        await entry.unpublish();
-        await entry.delete();
-        console.log(chalk.green(`Entry deleted: ${entryId}`));
+        // Record ID is the first column of each row.
+        const recordId = row.split(",")[0];
+        // Get the record, unpublish, then delete.
+        const record =
+          type === "asset"
+            ? await environment.getAsset(recordId)
+            : await environment.getEntry(recordId);
+        await record.unpublish();
+        await record.delete();
+        console.log(chalk.green(`Record deleted: ${recordId}`));
       }
     });
 };
