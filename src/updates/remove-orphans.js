@@ -4,6 +4,7 @@ import { environment } from "../lib/cmaEnvironment.js";
 import { getArguments } from "../lib/commands.js";
 import { readFile } from "../lib/filesystem.js";
 
+// @TODO: It may also be a better idea to just mark as archived.
 const removeOrphans = async (type) => {
   const csvData = await readFile(`orphans/${type}.csv`);
   // Split csvData on line breaks to get each row.
