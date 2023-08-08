@@ -8,21 +8,22 @@ const generateOrphanReport = async (type) => {
   // Object to hold candidates for deletion.
   const orphans = [["recordId", "Web App Link"]];
 
+  const itemsPerPage = 100;
+
   let records =
     type === "asset"
       ? await client.getAssets({
-          limit: 10,
+          limit: itemsPerPage,
           skip: 0,
         })
       : await client.getEntries({
           content_type: type,
-          limit: 10,
+          limit: itemsPerPage,
           skip: 0,
         });
 
   // Get the total number of pages so that we can iterate over all items.
   const totalPages = Math.ceil(records.total / records.limit);
-  const itemsPerPage = 100;
   for (let i = 0; i <= totalPages; i++) {
     records =
       type === "asset"
