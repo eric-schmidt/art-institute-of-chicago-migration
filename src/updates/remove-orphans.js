@@ -26,7 +26,13 @@ const removeOrphans = async (type) => {
             : await environment.getEntry(recordId);
         await record.unpublish();
         await record.delete();
-        console.log(chalk.green(`Record deleted: ${recordId}`));
+
+        // Progress indicator.
+        process.stdout.write(
+          chalk.green(
+            `Deleted ${index} out of ${rows.length - 1} records... \r`
+          )
+        );
       }
     });
 };
