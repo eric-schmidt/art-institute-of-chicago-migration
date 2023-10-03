@@ -1,8 +1,8 @@
 {
-  "name": "Umami Migration Scripts",
+  "name": "Art Institute of Chicago Migration",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "./src/migrations/migrate.js",
   "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
