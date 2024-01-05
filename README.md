@@ -1,4 +1,4 @@
-# Artwork Migration
+# Art Institute of Chicago Migration (POC)
 
 ## Migration Scripts
 
