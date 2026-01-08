@@ -4,7 +4,7 @@
 
 Migration scripts for migrating data from the [Art Institute of Chicago API](https://api.artic.edu/docs/#introduction) to a Contentful Space (see `/src/migrations`). Additionally, this repo contains a variety of update scripts, showcasing how schemas can be updated after the fact in an iterative manner (see `/src/updates`).
 
-NOTE: This repo demos migrating content in a very procedural manner (i.e. you migrate all children first, then slowly work your way up the parent tree running each migration manually). Other repos showcase a more recursive approach, migrating nested references on the fly.
+NOTE: This repo demos migrating content in a "bottom up" manner (i.e. you migrate all children first, then slowly work your way up the parent tree running each migration manually). Other repos showcase a more recursive approach, migrating nested references on the fly.
 
 ADDENDUM: Due to the sheer number of 'artworks', that content type is migrating images recursively, which helps cut down on the number of items that need to be migrated (since we're not migrating alternate images).
 
